@@ -37,3 +37,23 @@ void send_mb_to_point(char x, char y)
 std::pair<char, char> compute_silo_xy()
 {
 }
+
+void compute_direction(char x0, char y0, char x1, char y1) {
+
+}
+
+void build_silo(char x, char y) {
+
+}
+
+void travel_to_point(char x, char y) {
+
+}
+
+void send_mb_to_point(char x, char y) {
+
+}
+
+std::pair<char, char> compute_silo_xy() {
+  
+}
