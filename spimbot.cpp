@@ -110,24 +110,42 @@ void build_silo(int x, int y)
 
     MiniBot_Info info = get_minibot_info();
 
-    if (info[0].x != x || info[0].y != y) {
+    if (info.minibots[0].x != x || info.minibots[0].y != y) {
         select_minibot_by_id(info[0].ID);
         set_target_tile(x, y);
-    } else if (info[1].x != x || info[1].y != y) {
-        select_minibot_by_id(info[1].ID);
-        set_target_tile(x, y);
-    } else if (info[2].x != x || info[2].y != y) {
-        select_minibot_by_id(info[2].ID);
-        set_target_tile(x, y);
-    } else {
+
         build_silo(x, y);
+    } else if (info.minibots[1].x != x || info.minibots[1].y != y) {
+        select_minibot_by_id(info.minibots[1].ID);
+        set_target_tile(x, y);
+
+        build_silo(x, y);
+    } else if (info.minibots[2].x != x || info.minibots[2].y != y) {
+        select_minibot_by_id(info.minibots[2].ID);
+        set_target_tile(x, y);
+
+        build_silo(x, y);
+    } else {
+        build_silo_command(x, y);
     }
 }
 
 int num_corn;
+int num_bots;
+void build_silo_command(int x, int y);
 void set_target_tile(int x, int y);
 void select_minibot_by_id(int id);
-typedef struct MiniBot_Info;
+typedef struct MiniBot {
+    int ID;
+    char type;
+    int x;
+    int y;
+    int kernels;
+} MiniBot;
+typedef struct MiniBot_Info {
+    int num_minibots;
+    struct MiniBot minibots[num_bots];
+} MiniBot_Info;
 MiniBot_Info get_minibot_info();
 int bot_x();
 int bot_y();
