@@ -54,6 +54,38 @@ main:
 infinite:
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
 
+travel_to_point:
+        sub $sp, $sp, 4;
+        sw $ra, 0($sp);
+
+        lw $t0, BOT_X($zero);
+        lw $t1, BOT_Y($zero);
+
+        bne $t0, $a0, travel_to_point_move;
+        beq $t1, $a1, finish_travel_to_point;
+travel_to_point_move:
+        sub $a0, $a0, $t0;
+        sub $a1, $a1, $t1;
+        jal sb_arctan; # $v0 will have the angle we need to set the bot to
+
+        
+
+        li $t0, 1;
+        sw $t0, ANGLE_CONTROL($zero);
+        sw $v0, ANGLE($zero);
+        li $t0, 1;
+        sw $t0, VELOCITY;
+
+        j travel_to_point;
+
+finish_travel_to_point:
+        li $t0, 0;
+        sw $t0, VELOCITY;
+
+        lw $ra, 0($sp);
+        add $sp, $sp, 4;
+        jr $ra;
+
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
 non_intrpt_str:    .asciiz "Non-interrupt exception\n"

@@ -99,42 +99,64 @@ bool should_pickup(int x, int y, char **k)
 }
 
 // Tino's
-void compute_direction(int x0, int y0, int x1, int y1)
+int compute_direction(int x0, int y0, int x1, int y1)
 {
+    return sb_arctan(x1 - x0, y1 - y0);
 }
 
 void build_silo(int x, int y)
 {
+    if (num_corn < 10) return;
+
+    MiniBot_Info info = get_minibot_info();
+
+    if (info[0].x != x || info[0].y != y) {
+        select_minibot_by_id(info[0].ID);
+        set_target_tile(x, y);
+    } else if (info[1].x != x || info[1].y != y) {
+        select_minibot_by_id(info[1].ID);
+        set_target_tile(x, y);
+    } else if (info[2].x != x || info[2].y != y) {
+        select_minibot_by_id(info[2].ID);
+        set_target_tile(x, y);
+    } else {
+        build_silo(x, y);
+    }
 }
 
+int num_corn;
+void set_target_tile(int x, int y);
+void select_minibot_by_id(int id);
+typedef struct MiniBot_Info;
+MiniBot_Info get_minibot_info();
+int bot_x();
+int bot_y();
+int sb_arctan(int x, int y);
+void set_angle(int angle);
 void travel_to_point(int x, int y)
 {
+    int x0 = bot_x();
+    int y0 = bot_y();
+
+    if (x0 == x && y0 == y) return;
+
+    int dx = x - x0;
+    int dy = y - y0;
+
+    int angle = sb_arctan(dx, dy);
+    set_angle(angle);
+
+    travel_to_point(x, y);
 }
 
-void send_mb_to_point(int x, int y)
+void send_mb_to_point(int x, int y, int bot)
 {
+    MiniBot_Info info = get_minibot_info();
+
+    select_minibot_by_id(info[bot].ID);
+    set_target_tile(x,y);
 }
 
 std::pair<int, int> compute_silo_xy()
 {
-}
-
-void compute_direction(int x0, int y0, int x1, int y1) {
-
-}
-
-void build_silo(int x, int y) {
-
-}
-
-void travel_to_point(int x, int y) {
-
-}
-
-void send_mb_to_point(int x, int y) {
-
-}
-
-std::pair<int, int> compute_silo_xy() {
-  
 }
