@@ -30,6 +30,11 @@ PICKUP                  = 0xffff00f4
 
 # Add any MMIO that you need here (see the Spimbot Documentation)
 
+three: .float 3.0
+five: .float 5.0
+PI: .float 3.141592
+F180: .float 180.0
+
 ### Puzzle
 GRIDSIZE = 8
 has_puzzle:        .word 0                         
@@ -50,41 +55,88 @@ main:
 	    mtc0    $t4, $12
 
 #Fill in your code here
+        li $a0, 100;
+        li $a1, 100;
+
+        jal travel_to_point;
 
 infinite:
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
 
 travel_to_point:
-        sub $sp, $sp, 4;
+        sub $sp, $sp, 12;
         sw $ra, 0($sp);
+        sw $s0, 4($sp);
+        sw $s1, 8($sp);
 
+        move $s0, $a0;
+        move $s1, $a1;
+
+travel_to_point_loop:
         lw $t0, BOT_X($zero);
         lw $t1, BOT_Y($zero);
 
         bne $t0, $a0, travel_to_point_move;
         beq $t1, $a1, finish_travel_to_point;
+
 travel_to_point_move:
-        sub $a0, $a0, $t0;
-        sub $a1, $a1, $t1;
+        sub $a0, $s0, $t0;
+        sub $a1, $s1, $t1;
         jal sb_arctan; # $v0 will have the angle we need to set the bot to
-
-        
-
         li $t0, 1;
         sw $t0, ANGLE_CONTROL($zero);
         sw $v0, ANGLE($zero);
         li $t0, 1;
         sw $t0, VELOCITY;
 
-        j travel_to_point;
+        j travel_to_point_loop;
 
 finish_travel_to_point:
         li $t0, 0;
         sw $t0, VELOCITY;
 
         lw $ra, 0($sp);
-        add $sp, $sp, 4;
+        lw $s0, 4($sp);
+        lw $s1, 8($sp);
+        add $sp, $sp, 12;
         jr $ra;
+
+sb_arctan:
+        li $v0, 0 # angle = 0;
+        abs $t0, $a0 # get absolute values
+        abs $t1, $a1
+        ble $t1, $t0, no_TURN_90
+        move $t0, $a1 
+        neg $a1, $a0 
+        move $a0, $t0 
+        li $v0, 90
+no_TURN_90:
+        bgez $a0, pos_x
+        add $v0, $v0, 180
+pos_x:
+        mtc1 $a0, $f0
+        mtc1 $a1, $f1 
+        cvt.s.w $f0, $f0 
+        cvt.s.w $f1, $f1 
+        div.s $f0, $f1, $f0 
+        mul.s $f1, $f0, $f0 
+        mul.s $f2, $f1, $f0 
+        l.s $f3, three 
+        div.s $f3, $f2, $f3 
+        sub.s $f6, $f0, $f3 
+        mul.s $f4, $f1, $f2 
+        l.s $f5, five 
+        div.s $f5, $f4, $f5 
+        add.s $f6, $f6, $f5 
+        l.s $f8, PI
+        div.s $f6, $f6, $f8 
+        l.s $f7, F180 
+        mul.s $f6, $f6, $f7 
+        cvt.w.s $f6, $f6
+        mfc1 $t0, $f6
+        add $v0, $v0, $t0 
+        jr $ra
+
 
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
