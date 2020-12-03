@@ -55,9 +55,11 @@ main:
 	    mtc0    $t4, $12
 
 #Fill in your code here
-        li $a0, 100;
-        li $a1, 100;
-
+        li $a0, 116;
+        li $a1, 104;
+        jal travel_to_point;
+        li $a0, 56;
+        li $a1, 170;
         jal travel_to_point;
 
 infinite:
@@ -73,13 +75,24 @@ travel_to_point:
         move $s1, $a1;
 
 travel_to_point_loop:
-        lw $t0, BOT_X($zero);
-        lw $t1, BOT_Y($zero);
+        lw $t0, BOT_X;
+        sub $t1, $t0, 8;
+        add $t2, $t0, 8;
 
-        bne $t0, $a0, travel_to_point_move;
-        beq $t1, $a1, finish_travel_to_point;
+        blt $s0, $t1, travel_to_point_move;
+        bgt $s0, $t2, travel_to_point_move;
+
+        lw $t1, BOT_Y;
+        sub $t2, $t1, 8;
+        add $t3, $t1, 8;
+
+        blt $s1, $t2, travel_to_point_move;
+        blt $s1, $t3, finish_travel_to_point;
 
 travel_to_point_move:
+        lw $t0, BOT_X;
+        lw $t1, BOT_Y;
+
         sub $a0, $s0, $t0;
         sub $a1, $s1, $t1;
         jal sb_arctan; # $v0 will have the angle we need to set the bot to
