@@ -1,4 +1,4 @@
-.data
+t.data
 # syscall constants
 PRINT_STRING            = 4
 PRINT_CHAR              = 11
@@ -28,6 +28,8 @@ REQUEST_PUZZLE_ACK      = 0xffff00d8  ## Puzzle
 
 PICKUP                  = 0xffff00f4
 
+artGET_NUM_KERNELS         = 0xffff2010
+
 # Add any MMIO that you need here (see the Spimbot Documentation)
 
 three: .float 3.0
@@ -40,6 +42,12 @@ GRIDSIZE = 8
 has_puzzle:        .word 0                         
 puzzle:      .half 0:2000             
 heap:        .half 0:2000
+
+minibot_info:  
+.word 0
+
+num_kernels: .word 0:1
+
 #### Puzzle
 
 
@@ -55,12 +63,14 @@ main:
 	    mtc0    $t4, $12
 
 #Fill in your code here
-        li $a0, 116;
-        li $a1, 104;
-        jal travel_to_point;
-        li $a0, 56;
-        li $a1, 170;
-        jal travel_to_point;
+        # li $a0, 116;
+        # li $a1, 104;
+        # jal travel_to_point;
+        # li $a0, 56;
+        # li $a1, 170;
+        # jal travel_to_point;
+
+        jal build_silo;
 
 infinite:
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
@@ -150,6 +160,19 @@ pos_x:
         add $v0, $v0, $t0 
         jr $ra
 
+build_silo:
+        la $t0, num_kernels;
+        sw $t0, GET_NUM_KERNELS;
+        
+        lw $t0, 4($t0);
+        beq $t0, 0, build_silo_end;
+
+build_silo_loop:
+
+        j build_silo_loop;
+
+build_silo_end:
+        jr $ra;
 
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
