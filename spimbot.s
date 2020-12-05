@@ -182,8 +182,8 @@ get_best_corn:
         add $t3, $a1, 5 # int max_y = y + 5;
         move $t4, $0    # int best_corn = 0;
 
-        li $v0, -1      # x = -1;
-        li $v1, -1      # y = -1;
+        move $v0, $0    # x = -1;
+        move $v1, $0    # y = -1;
 
         if_edge_min_x:
                 bgez $t0, if_edge_min_y # if (min_x < 0)
@@ -192,11 +192,11 @@ get_best_corn:
                 bgez $t1, if_edge_max_x # if (min_y < 0)
                 move $t1, $0            # min_y = 0;
         if_edge_max_x:
-                ble $t2, 320, if_edge_max_y     # if (max_x > 320)
-                li $t2, 320                     # min_x = 320;
+                ble $t2, 320, if_edge_max_y # if (max_x > 320)
+                li $t2, 320                 # min_x = 320;
         if_edge_max_y:
-                ble $t3, 320, best_corn_outer_loop      # if (max_y > 320)
-                li $t3, 320                             # max_y = 320;
+                ble $t3, 320, best_corn_outer_loop # if (max_y > 320)
+                li $t3, 320                        # max_y = 320;
 
         best_corn_outer_loop:
                 bge $t1, $t3, end_best_corn # while (min_y < max_y)
@@ -204,15 +204,15 @@ get_best_corn:
                 best_corn_inner:
                         bge $t0, $t2, continue_best_corn_outer # while (min_x < max_x)
                         # {
-                        mul $t5, $t1, 320       # min_y * 320
-                        add $t5, $t5, $t0       # min_x + min_y * 320
-                        lw $t5, kernels($t5)    # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
+                        mul $t5, $t1, 320    # min_y * 320
+                        add $t5, $t5, $t0    # min_x + min_y * 320
+                        lw $t5, kernels($t5) # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
                         if_better_corn:
                                 ble $t5, $t4, continue_best_corn_inner # if (curr_k > best_corn)
                                 # {
-                                move $t4, $t5   # best_corn = curr_k;
-                                move $v0, $t0   # x = min_x;
-                                move $v1, $t1   # y = min_y;
+                                move $t4, $t5 # best_corn = curr_k;
+                                move $v0, $t0 # x = min_x;
+                                move $v1, $t1 # y = min_y;
                                 # }
                         # }
                 continue_best_corn_inner:
