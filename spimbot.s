@@ -202,17 +202,17 @@ get_best_corn:
                 bge $t1, $t3, end_best_corn # while (min_y < max_y)
                 # {
                 best_corn_inner:
-                        bge $t0, $t2 # while (min_x < max_x)
+                        bge $t0, $t2, continue_best_corn_outer # while (min_x < max_x)
                         # {
                         mul $t5, $t1, 320       # min_y * 320
                         add $t5, $t5, $t0       # min_x + min_y * 320
                         lw $t5, kernels($t5)    # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
                         if_better_corn:
-                                ble $t5, $t4, continue_inner_loop # if (curr_k > best_corn)
+                                ble $t5, $t4, continue_best_corn_inner # if (curr_k > best_corn)
                                 # {
-                                move $t4, $t5 # best_corn = curr_k;
-                                move $v0, $t0 # x = min_x;
-                                move $v1, $t1 # y = min_y;
+                                move $t4, $t5   # best_corn = curr_k;
+                                move $v0, $t0   # x = min_x;
+                                move $v1, $t1   # y = min_y;
                                 # }
                         # }
                 continue_best_corn_inner:
@@ -226,7 +226,7 @@ get_best_corn:
         end_best_corn:
         jr $ra
 
-        
+
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
 non_intrpt_str:    .asciiz "Non-interrupt exception\n"
