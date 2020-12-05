@@ -654,6 +654,16 @@ get_best_corn:
         end_best_corn:
         jr $ra
 
+euclidean_dist:
+        mul $a0, $a0, $a0 # x^2
+        mul $a1, $a1, $a1 # y^2
+        add $v0, $a0, $a1 # x^2 + y^2
+        mtc1 $v0, $f0
+        cvt.s.w $f0, $f0 # float(x^2 + y^2)
+        sqrt.s $f0, $f0 # sqrt(x^2 + y^2)
+        cvt.w.s $f0, $f0 # int(sqrt(...))
+        mfc1 $v0, $f0
+        jr $ra
 
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
