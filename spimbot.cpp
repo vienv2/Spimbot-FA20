@@ -4,7 +4,40 @@
 // Vien's
 std::pair<int, int> get_best_corn(int x, int y, char **k)
 {
-    
+    int min_x = x - 5;
+    int min_y = y - 5;
+    int max_x = x + 5;
+    int max_y = y + 5;
+    int best_corn = 0;
+
+    x = y = -1;
+
+    if (min_x < 0)
+        min_x = 0;
+    if (min_y < 0)
+        min_y = 0;
+    if (max_x > 320)
+        min_x = 320;
+    if (max_y > 320)
+        max_y = 320;
+
+    while (min_y < max_y)
+    {
+        while (min_x < max_x)
+        {
+            int curr_k = k[y][x];
+            if (curr_k > best_corn)
+            {
+                best_corn = curr_k;
+                x = min_x;
+                y = min_y;
+            }
+            min_x = min_x + 1;
+        }
+        min_y = min_y + 1;
+    }
+
+    return {x, y};
 }
 
 int euclidean(int x0, int y0, int x1, int y1)
@@ -62,8 +95,8 @@ int rng(int upper)
 
     # Random number is now in $a0
     */
-   int x = rand() % 180;
-   return x;
+    int x = rand() % 180;
+    return x;
 }
 
 /* Return value legends: 0 = "should not solve"
@@ -106,26 +139,34 @@ int compute_direction(int x0, int y0, int x1, int y1)
 
 void build_silo(int x, int y)
 {
-    if (num_corn < 10) return;
+    if (num_corn < 10)
+        return;
 
     MiniBot_Info info = get_minibot_info();
 
-    if (info.minibots[0].x != x || info.minibots[0].y != y) {
+    if (info.minibots[0].x != x || info.minibots[0].y != y)
+    {
         select_minibot_by_id(info.minibots[0].ID);
         set_target_tile(x, y);
 
         build_silo(x, y);
-    } else if (info.minibots[1].x != x || info.minibots[1].y != y) {
+    }
+    else if (info.minibots[1].x != x || info.minibots[1].y != y)
+    {
         select_minibot_by_id(info.minibots[1].ID);
         set_target_tile(x, y);
 
         build_silo(x, y);
-    } else if (info.minibots[2].x != x || info.minibots[2].y != y) {
+    }
+    else if (info.minibots[2].x != x || info.minibots[2].y != y)
+    {
         select_minibot_by_id(info.minibots[2].ID);
         set_target_tile(x, y);
 
         build_silo(x, y);
-    } else {
+    }
+    else
+    {
         build_silo_command(x, y);
     }
 }
@@ -135,14 +176,16 @@ const int num_bots;
 void build_silo_command(int x, int y);
 void set_target_tile(int x, int y);
 void select_minibot_by_id(int id);
-typedef struct MiniBot {
+typedef struct MiniBot
+{
     int ID;
     char type;
     int x;
     int y;
     int kernels;
 } MiniBot;
-typedef struct MiniBot_Info {
+typedef struct MiniBot_Info
+{
     int num_minibots;
     struct MiniBot minibots[num_bots];
 } MiniBot_Info;
@@ -156,7 +199,8 @@ void travel_to_point(int x, int y)
     int x0 = bot_x();
     int y0 = bot_y();
 
-    if (x0 == x && y0 == y) return;
+    if (x0 == x && y0 == y)
+        return;
 
     int dx = x - x0;
     int dy = y - y0;
@@ -172,7 +216,7 @@ void send_mb_to_point(int x, int y, int bot)
     MiniBot_Info info = get_minibot_info();
 
     select_minibot_by_id(info.minibots[bot].ID);
-    set_target_tile(x,y);
+    set_target_tile(x, y);
 }
 
 std::pair<int, int> compute_silo_xy()
