@@ -41,12 +41,16 @@ has_puzzle:        .word 0
 puzzle:      .half 0:2000             
 heap:        .half 0:2000
 
+<<<<<<< HEAD
+#### Puzzle
+=======
 minibot_info:  
 .word 0
 
 ### Kernels
 num_kernels: .word 0:1
 kernels: .byte 0:1600
+>>>>>>> 4ed02c3ba727f81fce45fc1934d7fd2f5cf230ff
 
 
 
@@ -184,6 +188,7 @@ solve_puzzle:
         add $sp, $sp, 4;
         jr $ra;
 
+<<<<<<< HEAD
 # The contents of this file are not graded, it exists purely as a reference solution that you can use
 
 
@@ -602,6 +607,7 @@ slow_solve_dominosa:
 
         jr      $ra
 
+=======
 get_best_corn:
         # $a0 = x, $a1 = y
         sub $t0, $a0, 5 # int min_x = x - 5;
@@ -655,6 +661,7 @@ get_best_corn:
         jr $ra
 
 
+>>>>>>> 4ed02c3ba727f81fce45fc1934d7fd2f5cf230ff
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
 non_intrpt_str:    .asciiz "Non-interrupt exception\n"
