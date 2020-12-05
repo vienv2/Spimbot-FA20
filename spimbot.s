@@ -41,7 +41,16 @@ has_puzzle:        .word 0
 puzzle:      .half 0:2000             
 heap:        .half 0:2000
 
+<<<<<<< HEAD
 #### Puzzle
+=======
+minibot_info:  
+.word 0
+
+### Kernels
+num_kernels: .word 0:1
+kernels: .byte 0:1600
+>>>>>>> 4ed02c3ba727f81fce45fc1934d7fd2f5cf230ff
 
 
 
@@ -179,6 +188,7 @@ solve_puzzle:
         add $sp, $sp, 4;
         jr $ra;
 
+<<<<<<< HEAD
 # The contents of this file are not graded, it exists purely as a reference solution that you can use
 
 
@@ -597,6 +607,61 @@ slow_solve_dominosa:
 
         jr      $ra
 
+=======
+get_best_corn:
+        # $a0 = x, $a1 = y
+        sub $t0, $a0, 5 # int min_x = x - 5;
+        sub $t1, $a1, 5 # int min_y = y - 5;
+        add $t2, $a0, 5 # int max_x = x + 5;
+        add $t3, $a1, 5 # int max_y = y + 5;
+        move $t4, $0    # int best_corn = 0;
+
+        li $v0, -1      # x = -1;
+        li $v1, -1      # y = -1;
+
+        if_edge_min_x:
+                bgez $t0, if_edge_min_y # if (min_x < 0)
+                move $t0, $0            # min_x = 0;
+        if_edge_min_y:
+                bgez $t1, if_edge_max_x # if (min_y < 0)
+                move $t1, $0            # min_y = 0;
+        if_edge_max_x:
+                ble $t2, 320, if_edge_max_y     # if (max_x > 320)
+                li $t2, 320                     # min_x = 320;
+        if_edge_max_y:
+                ble $t3, 320, best_corn_outer_loop      # if (max_y > 320)
+                li $t3, 320                             # max_y = 320;
+
+        best_corn_outer_loop:
+                bge $t1, $t3, end_best_corn # while (min_y < max_y)
+                # {
+                best_corn_inner:
+                        bge $t0, $t2, continue_best_corn_outer # while (min_x < max_x)
+                        # {
+                        mul $t5, $t1, 320       # min_y * 320
+                        add $t5, $t5, $t0       # min_x + min_y * 320
+                        lw $t5, kernels($t5)    # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
+                        if_better_corn:
+                                ble $t5, $t4, continue_best_corn_inner # if (curr_k > best_corn)
+                                # {
+                                move $t4, $t5   # best_corn = curr_k;
+                                move $v0, $t0   # x = min_x;
+                                move $v1, $t1   # y = min_y;
+                                # }
+                        # }
+                continue_best_corn_inner:
+                        add $t0, $t0, 1 # min_y = min_y + 1;
+                        j best_corn_inner_loop
+                # }
+        continue_best_corn_outer:
+                add $t1, $t1, 1 # return {x, y};
+                j best_corn_outer_loop
+
+        end_best_corn:
+        jr $ra
+
+
+>>>>>>> 4ed02c3ba727f81fce45fc1934d7fd2f5cf230ff
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
 non_intrpt_str:    .asciiz "Non-interrupt exception\n"
