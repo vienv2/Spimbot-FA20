@@ -195,6 +195,17 @@ pos_x:
         add $v0, $v0, $t0 
         jr $ra
 
+should_pickup:
+        # $a0 = x, $a1 = y
+        mul $t0, $a1, 320       # y * 320
+        add $t0, $t0, $a0       # x + y * 320
+        lw $t0, kernels($t0)    # int num_k = k[y][x] = k[min_x + min_y * 320];
+        li $v0, 1               # bool should_pickup = true;
+        bnez $v0, end_should_pickup     # if (num_k == 0)
+                move $v0, $0    # should_pickup = false;
+        end_should_pickup:
+        jr $ra                  # return should_pickup;
+
 solve_puzzle:
         sub $sp, $sp, 4;
         sw $ra, 0($sp);
