@@ -78,153 +78,151 @@ main:
         # sw $t0, REQUEST_PUZZLE;
 
 infinite:
-        lw $t0, has_puzzle;
-        beq $t0, 0, skip_solve_puzzle;
-        jal solve_puzzle;
+        lw      $t0, has_puzzle;
+        beq     $t0, 0, skip_solve_puzzle;
+        jal     solve_puzzle;
 
 skip_solve_puzzle:
-        jal check_if_spawn_bot;
-
+        jal     check_if_spawn_bot;
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
 
 check_if_spawn_bot:
-        la $t0, minibot_info;
-        sw $t0, GET_MINIBOT_INFO;
+        la      $t0, minibot_info;
+        sw      $t0, GET_MINIBOT_INFO;
 
-        lw $t0, 0($t0);
-        bge $t0, 3, check_if_spawn_bot_end;
+        lw      $t0, 0($t0);
+        bge     $t0, 3, check_if_spawn_bot_end;
 
-        la $t0, num_kernels;
-        sw $t0, GET_NUM_KERNELS;
-        lw $t0, 0($t0);
-        blt $t0, 2, check_if_spawn_bot_end;
+        la      $t0, num_kernels;
+        sw      $t0, GET_NUM_KERNELS;
+        lw      $t0, 0($t0);
+        blt     $t0, 2, check_if_spawn_bot_end;
 
-        la $t0, num_puzzles;
-        sw $t0, GET_PUZZLE_CNT;
-        lw $t0, 0($t0);
-        blt $t0, 1, check_if_spawn_bot_end;
+        la      $t0, num_puzzles;
+        sw      $t0, GET_PUZZLE_CNT;
+        lw      $t0, 0($t0);
+        blt     $t0, 1, check_if_spawn_bot_end;
 
-        li $t0, 0;
-        sw $t0, SPAWN_MINIBOT;
+        li      $t0, 0;
+        sw      $t0, SPAWN_MINIBOT;
 
 check_if_spawn_bot_end:
-        jr $ra;
+        jr      $ra;
 
 travel_to_point:
-        sub $sp, $sp, 12;
-        sw $ra, 0($sp);
-        sw $s0, 4($sp);
-        sw $s1, 8($sp);
+        sub     $sp, $sp, 12;
+        sw      $ra, 0($sp);
+        sw      $s0, 4($sp);
+        sw      $s1, 8($sp);
 
-        move $s0, $a0;
-        move $s1, $a1;
+        move    $s0, $a0;
+        move    $s1, $a1;
 
 travel_to_point_loop:
-        lw $t0, BOT_X;
-        sub $t1, $t0, 8;
-        add $t2, $t0, 8;
+        lw      $t0, BOT_X;
+        sub     $t1, $t0, 8;
+        add     $t2, $t0, 8;
 
-        blt $s0, $t1, travel_to_point_move;
-        bgt $s0, $t2, travel_to_point_move;
+        blt     $s0, $t1, travel_to_point_move;
+        bgt     $s0, $t2, travel_to_point_move;
 
-        lw $t1, BOT_Y;
-        sub $t2, $t1, 8;
-        add $t3, $t1, 8;
+        lw      $t1, BOT_Y;
+        sub     $t2, $t1, 8;
+        add     $t3, $t1, 8;
 
-        blt $s1, $t2, travel_to_point_move;
-        blt $s1, $t3, finish_travel_to_point;
+        blt     $s1, $t2, travel_to_point_move;
+        blt     $s1, $t3, finish_travel_to_point;
 
 travel_to_point_move:
-        lw $t0, BOT_X;
-        lw $t1, BOT_Y;
+        lw      $t0, BOT_X;
+        lw      $t1, BOT_Y;
+        sub     $a0, $s0, $t0;
+        sub     $a1, $s1, $t1;
+        jal     sb_arctan; # $v0 will have the angle we need to set the bot to
+        li      $t0, 1;
+        sw      $t0, ANGLE_CONTROL($zero);
+        sw      $v0, ANGLE($zero);
+        li      $t0, 1;
+        sw      $t0, VELOCITY;
 
-        sub $a0, $s0, $t0;
-        sub $a1, $s1, $t1;
-        jal sb_arctan; # $v0 will have the angle we need to set the bot to
-        li $t0, 1;
-        sw $t0, ANGLE_CONTROL($zero);
-        sw $v0, ANGLE($zero);
-        li $t0, 1;
-        sw $t0, VELOCITY;
-
-        j travel_to_point_loop;
+        j       travel_to_point_loop;
 
 finish_travel_to_point:
-        li $t0, 0;
-        sw $t0, VELOCITY;
+        li      $t0, 0;
+        sw      $t0, VELOCITY;
 
-        lw $ra, 0($sp);
-        lw $s0, 4($sp);
-        lw $s1, 8($sp);
-        add $sp, $sp, 12;
-        jr $ra;
+        lw      $ra, 0($sp);
+        lw      $s0, 4($sp);
+        lw      $s1, 8($sp);
+        add     $sp, $sp, 12;
+        jr      $ra;
 
 sb_arctan:
-        li $v0, 0 # angle = 0;
-        abs $t0, $a0 # get absolute values
-        abs $t1, $a1
-        ble $t1, $t0, no_TURN_90
-        move $t0, $a1 
-        neg $a1, $a0 
-        move $a0, $t0 
-        li $v0, 90
+        li      $v0, 0  # angle = 0;
+        abs     $t0, $a0 # get absolute values
+        abs     $t1, $a1
+        ble     $t1, $t0, no_TURN_90
+        move    $t0, $a1 
+        neg     $a1, $a0 
+        move    $a0, $t0 
+        li      $v0, 90
 no_TURN_90:
-        bgez $a0, pos_x
-        add $v0, $v0, 180
+        bgez    $a0, pos_x
+        add     $v0, $v0, 180
 pos_x:
-        mtc1 $a0, $f0
-        mtc1 $a1, $f1 
+        mtc1    $a0, $f0
+        mtc1    $a1, $f1 
         cvt.s.w $f0, $f0 
         cvt.s.w $f1, $f1 
-        div.s $f0, $f1, $f0 
-        mul.s $f1, $f0, $f0 
-        mul.s $f2, $f1, $f0 
-        l.s $f3, three 
-        div.s $f3, $f2, $f3 
-        sub.s $f6, $f0, $f3 
-        mul.s $f4, $f1, $f2 
-        l.s $f5, five 
-        div.s $f5, $f4, $f5 
-        add.s $f6, $f6, $f5 
-        l.s $f8, PI
-        div.s $f6, $f6, $f8 
-        l.s $f7, F180 
-        mul.s $f6, $f6, $f7 
+        div.s   $f0, $f1, $f0 
+        mul.s   $f1, $f0, $f0 
+        mul.s   $f2, $f1, $f0 
+        l.s     $f3, three 
+        div.s   $f3, $f2, $f3 
+        sub.s   $f6, $f0, $f3 
+        mul.s   $f4, $f1, $f2 
+        l.s     $f5, five 
+        div.s   $f5, $f4, $f5 
+        add.s   $f6, $f6, $f5 
+        l.s     $f8, PI
+        div.s   $f6, $f6, $f8 
+        l.s     $f7, F180 
+        mul.s   $f6, $f6, $f7 
         cvt.w.s $f6, $f6
-        mfc1 $t0, $f6
-        add $v0, $v0, $t0 
-        jr $ra
+        mfc1    $t0, $f6
+        add     $v0, $v0, $t0 
+        jr      $ra
 
 should_pickup:
         # $a0 = x, $a1 = y
-        mul $t0, $a1, 320       # y * 320
-        add $t0, $t0, $a0       # x + y * 320
-        lw $t0, kernels($t0)    # int num_k = k[y][x] = k[min_x + min_y * 320];
-        li $v0, 1               # bool should_pickup = true;
-        bnez $v0, end_should_pickup     # if (num_k == 0)
-                move $v0, $0    # should_pickup = false;
+        mul     $t0, $a1, 320           # y * 320
+        add     $t0, $t0, $a0           # x + y * 320
+        lw      $t0, kernels($t0)       # int num_k = k[y][x] = k[min_x + min_y * 320];
+        li      $v0, 1                  # bool should_pickup = true;
+        bnez    $v0, end_should_pickup  # if (num_k == 0)
+        move    $v0, $0                 # should_pickup = false;
         end_should_pickup:
-        jr $ra                  # return should_pickup;
+        jr      $ra                     # return should_pickup;
 
 solve_puzzle:
-        sub $sp, $sp, 4;
-        sw $ra, 0($sp);
+        sub     $sp, $sp, 4;
+        sw      $ra, 0($sp);
 
-        la $a0, puzzle;
-        la $a1, heap;
-        jal slow_solve_dominosa;
+        la      $a0, puzzle;
+        la      $a1, heap;
+        jal     slow_solve_dominosa;
 
-        la $t0, heap;
-        sw $t0, SUBMIT_SOLUTION;
+        la      $t0, heap;
+        sw      $t0, SUBMIT_SOLUTION;
 
-        li $t0, 0;
-        sw $t0, has_puzzle;
-        la $t0, puzzle;
-        sw $t0, REQUEST_PUZZLE;        
+        li      $t0, 0;
+        sw      $t0, has_puzzle;
+        la      $t0, puzzle;
+        sw      $t0, REQUEST_PUZZLE;        
 
-        lw $ra, 0($sp);
-        add $sp, $sp, 4;
-        jr $ra;
+        lw      $ra, 0($sp);
+        add     $sp, $sp, 4;
+        jr      $ra;
 
 bonk_handler:
         # a0 = direction
@@ -681,66 +679,66 @@ should_pickup:
 
 get_best_corn:
         # $a0 = x, $a1 = y
-        sub $t0, $a0, 5 # int min_x = x - 5;
-        sub $t1, $a1, 5 # int min_y = y - 5;
-        add $t2, $a0, 5 # int max_x = x + 5;
-        add $t3, $a1, 5 # int max_y = y + 5;
-        move $t4, $0    # int best_corn = 0;
+        sub     $t0, $a0, 5     # int min_x = x - 5;
+        sub     $t1, $a1, 5     # int min_y = y - 5;
+        add     $t2, $a0, 5     # int max_x = x + 5;
+        add     $t3, $a1, 5     # int max_y = y + 5;
+        move    $t4, $0         # int best_corn = 0;
 
-        move $v0, $0    # x = -1;
-        move $v1, $0    # y = -1;
+        move    $v0, $0         # x = -1;
+        move    $v1, $0         # y = -1;
 
         if_edge_min_x:
-                bgez $t0, if_edge_min_y # if (min_x < 0)
-                move $t0, $0            # min_x = 0;
+                bgez    $t0, if_edge_min_y      # if (min_x < 0)
+                move    $t0, $0                 # min_x = 0;
         if_edge_min_y:
-                bgez $t1, if_edge_max_x # if (min_y < 0)
-                move $t1, $0            # min_y = 0;
+                bgez    $t1, if_edge_max_x      # if (min_y < 0)
+                move    $t1, $0                 # min_y = 0;
         if_edge_max_x:
-                ble $t2, 320, if_edge_max_y # if (max_x > 320)
-                li $t2, 320                 # min_x = 320;
+                ble     $t2, 320, if_edge_max_y # if (max_x > 320)
+                li      $t2, 320                # min_x = 320;
         if_edge_max_y:
-                ble $t3, 320, best_corn_outer_loop # if (max_y > 320)
-                li $t3, 320                        # max_y = 320;
+                ble     $t3, 320, best_corn_outer_loop  # if (max_y > 320)
+                li      $t3, 320                        # max_y = 320;
 
         best_corn_outer_loop:
-                bge $t1, $t3, end_best_corn # while (min_y < max_y)
+                bge     $t1, $t3, end_best_corn # while (min_y < max_y)
                 # {
                 best_corn_inner:
-                        bge $t0, $t2, continue_best_corn_outer # while (min_x < max_x)
+                        bge     $t0, $t2, continue_best_corn_outer # while (min_x < max_x)
                         # {
-                        mul $t5, $t1, 320    # min_y * 320
-                        add $t5, $t5, $t0    # min_x + min_y * 320
-                        lw $t5, kernels($t5) # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
+                        mul     $t5, $t1, 320           # min_y * 320
+                        add     $t5, $t5, $t0           # min_x + min_y * 320
+                        lw      $t5, kernels($t5)       # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
                         if_better_corn:
-                                ble $t5, $t4, continue_best_corn_inner # if (curr_k > best_corn)
+                                ble     $t5, $t4, continue_best_corn_inner # if (curr_k > best_corn)
                                 # {
-                                move $t4, $t5 # best_corn = curr_k;
-                                move $v0, $t0 # x = min_x;
-                                move $v1, $t1 # y = min_y;
+                                move    $t4, $t5        # best_corn = curr_k;
+                                move    $v0, $t0        # x = min_x;
+                                move    $v1, $t1        # y = min_y;
                                 # }
                         # }
                 continue_best_corn_inner:
-                        add $t0, $t0, 1 # min_y = min_y + 1;
-                        j best_corn_inner_loop
+                        add     $t0, $t0, 1     # min_y = min_y + 1;
+                        j       best_corn_inner_loop
                 # }
         continue_best_corn_outer:
-                add $t1, $t1, 1 # return {x, y};
-                j best_corn_outer_loop
+                add     $t1, $t1, 1     # return {x, y};
+                j       best_corn_outer_loop
 
         end_best_corn:
-        jr $ra
+        jr      $ra
 
 euclidean_dist:
-        mul $a0, $a0, $a0 # x^2
-        mul $a1, $a1, $a1 # y^2
-        add $v0, $a0, $a1 # x^2 + y^2
-        mtc1 $v0, $f0
+        mul     $a0, $a0, $a0 # x^2
+        mul     $a1, $a1, $a1 # y^2
+        add     $v0, $a0, $a1 # x^2 + y^2
+        mtc1    $v0, $f0
         cvt.s.w $f0, $f0 # float(x^2 + y^2)
-        sqrt.s $f0, $f0 # sqrt(x^2 + y^2)
+        sqrt.s  $f0, $f0 # sqrt(x^2 + y^2)
         cvt.w.s $f0, $f0 # int(sqrt(...))
-        mfc1 $v0, $f0
-        jr $ra
+        mfc1    $v0, $f0
+        jr      $ra
 
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
