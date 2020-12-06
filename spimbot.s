@@ -28,6 +28,11 @@ REQUEST_PUZZLE_ACK      = 0xffff00d8  ## Puzzle
 
 PICKUP                  = 0xffff00f4
 
+GET_MINIBOT_INFO        = 0xffff2014
+GET_NUM_KERNELS         = 0xffff2010
+GET_PUZZLE_CNT          = 0xffff2008
+SPAWN_MINIBOT           = 0xffff00dc
+
 # Add any MMIO that you need here (see the Spimbot Documentation)
 
 three: .float 3.0
@@ -43,12 +48,13 @@ heap:        .half 0:2000
 
 minibot_info:  
 .word 0
+.half 0:2000
 
 ### Kernels
 num_kernels: .word 0:1
 kernels: .byte 0:1600
 
-
+num_puzzles: .word 0:1
 
 .text
 main:
@@ -68,8 +74,8 @@ main:
         # li $a1, 170;
         # jal travel_to_point;
 
-        la $t0, puzzle;
-        sw $t0, REQUEST_PUZZLE;
+        # la $t0, puzzle;
+        # sw $t0, REQUEST_PUZZLE;
 
 infinite:
         lw $t0, has_puzzle;
@@ -77,7 +83,32 @@ infinite:
         jal solve_puzzle;
 
 skip_solve_puzzle:
+        jal check_if_spawn_bot;
+
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
+
+check_if_spawn_bot:
+        la $t0, minibot_info;
+        sw $t0, GET_MINIBOT_INFO;
+
+        lw $t0, 0($t0);
+        bge $t0, 3, check_if_spawn_bot_end;
+
+        la $t0, num_kernels;
+        sw $t0, GET_NUM_KERNELS;
+        lw $t0, 0($t0);
+        blt $t0, 2, check_if_spawn_bot_end;
+
+        la $t0, num_puzzles;
+        sw $t0, GET_PUZZLE_CNT;
+        lw $t0, 0($t0);
+        blt $t0, 1, check_if_spawn_bot_end;
+
+        li $t0, 0;
+        sw $t0, SPAWN_MINIBOT;
+
+check_if_spawn_bot_end:
+        jr $ra;
 
 travel_to_point:
         sub $sp, $sp, 12;
