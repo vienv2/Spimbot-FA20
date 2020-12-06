@@ -226,6 +226,38 @@ solve_puzzle:
         add $sp, $sp, 4;
         jr $ra;
 
+bonk_handler:
+        # a0 = direction
+        sub     $sp, $sp, 4     
+        sw      $a0, 0($sp)     # save dir
+        li      $a0, 180
+        jal     rng             # int rand_angle = rng(180);
+        lw      $t0, 0($sp)     # int dir 
+        add     $t1, $t1, 180   # rand_angle = rand_angle + 180;
+        add     $t1, $t1, $t0   # rand_angle = dir + rand_angle;
+        sw      $t1, 0($sp)     # save rand_angle
+        li      $a0, 24000
+        jal     rng
+        move    $v1, $v0
+        lw      $v0, 0($sp)
+        add     $sp, $sp, 4
+        jr      $ra
+        
+rng:
+        # $a0 = upper bound
+        move    $t0, $a0
+        # Set seed
+        li      $v0, 40  # Random seed
+        li      $a0, 0   # RNG ID = 0
+        syscall
+        # Generate random number
+        li      $v0, 42  # Random int range
+        li      $a0, 0   # RNG ID = 0
+        li      $a1, $t0 # Generates random int 0 <= x < upper bound
+        syscall
+        move    $v0, $a1
+        jr      $ra
+
 # The contents of this file are not graded, it exists purely as a reference solution that you can use
 
 
