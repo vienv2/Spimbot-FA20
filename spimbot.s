@@ -602,6 +602,9 @@ slow_solve_dominosa:
 
         jr      $ra
 
+should_pickup:
+        
+
 get_best_corn:
         # $a0 = x, $a1 = y
         sub $t0, $a0, 5 # int min_x = x - 5;
