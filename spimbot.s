@@ -52,7 +52,7 @@ minibot_info:
 
 ### Kernels
 num_kernels: .word 0:1
-kernels: .byte 0:1600
+kernels: .byte 0:1604
 
 num_puzzles: .word 0:1
 
@@ -195,9 +195,9 @@ pos_x:
 
 should_pickup:
         # $a0 = x, $a1 = y
-        mul     $t0, $a1, 320           # y * 320
+        mul     $t0, $a1 320           # y * 320
         add     $t0, $t0, $a0           # x + y * 320
-        lw      $t0, kernels($t0)       # int num_k = k[y][x] = k[min_x + min_y * 320];
+        lbu     $t0, kernels($t0)       # int num_k = k[y][x] = k[min_x + min_y * 320];
         li      $v0, 1                  # bool should_pickup = true;
         bnez    $v0, end_should_pickup  # if (num_k == 0)
         move    $v0, $0                 # should_pickup = false;
@@ -672,10 +672,7 @@ slow_solve_dominosa:
         lw      $s2, 12($sp)
         add     $sp, $sp, 16
 
-        jr      $ra
-
-should_pickup:
-        
+        jr      $ra        
 
 get_best_corn:
         # $a0 = x, $a1 = y
@@ -709,7 +706,7 @@ get_best_corn:
                         # {
                         mul     $t5, $t1, 320           # min_y * 320
                         add     $t5, $t5, $t0           # min_x + min_y * 320
-                        lw      $t5, kernels($t5)       # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
+                        lbu     $t5, kernels($t5)       # int curr_k = k[min_y][min_x] = k[min_x + min_y * 320];
                         if_better_corn:
                                 ble     $t5, $t4, continue_best_corn_inner # if (curr_k > best_corn)
                                 # {
