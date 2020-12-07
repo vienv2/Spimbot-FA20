@@ -56,6 +56,8 @@ kernels: .byte 0:1604
 
 num_puzzles: .word 0:1
 
+is_moving: .word 0
+
 .text
 main:
 # Construct interrupt mask
@@ -67,15 +69,8 @@ main:
 	    mtc0    $t4, $12
 
 #Fill in your code here
-        # li $a0, 116;
-        # li $a1, 104;
-        # jal travel_to_point;
-        # li $a0, 56;
-        # li $a1, 170;
-        # jal travel_to_point;
-
-        # la $t0, puzzle;
-        # sw $t0, REQUEST_PUZZLE;
+        la $t0, puzzle;
+        sw $t0, REQUEST_PUZZLE;
 
 infinite:
         lw      $t0, has_puzzle;
@@ -83,6 +78,30 @@ infinite:
         jal     solve_puzzle;
 
 skip_solve_puzzle:
+        jal check_if_spawn_bot;
+
+        lw $a0, BOT_X;
+        lw $a1, BOT_Y;
+        jal get_best_corn;
+
+        lw $t0, BOT_X;
+        lw $t1, BOT_Y;
+
+        bne $t0, $v0, infinite_end;
+        beq $t1, $v1, infinite_end;
+infinite_pickup_corn:
+        sw $zero, PICKUP;
+
+infinite_end:
+        lw $a0, BOT_X;
+        lw $a1, BOT_Y;
+
+        jal get_best_corn;
+
+        move $v0, $a0;
+        move $v1, $a1;
+        jal travel_to_point
+
         jal     check_if_spawn_bot;
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
 
@@ -251,7 +270,7 @@ rng:
         # Generate random number
         li      $v0, 42  # Random int range
         li      $a0, 0   # RNG ID = 0
-        li      $a1, $t0 # Generates random int 0 <= x < upper bound
+        move      $a1, $t0 # Generates random int 0 <= x < upper bound
         syscall
         move    $v0, $a1
         jr      $ra
@@ -717,7 +736,7 @@ get_best_corn:
                         # }
                 continue_best_corn_inner:
                         add     $t0, $t0, 1     # min_y = min_y + 1;
-                        j       best_corn_inner_loop
+                        j       best_corn_inner
                 # }
         continue_best_corn_outer:
                 add     $t1, $t1, 1     # return {x, y};
