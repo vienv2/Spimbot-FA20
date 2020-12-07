@@ -28,6 +28,8 @@ REQUEST_PUZZLE_ACK      = 0xffff00d8  ## Puzzle
 
 PICKUP                  = 0xffff00f4
 
+# GET_KERNEL_LOCATIONS    = 0xffff202c
+GET_KERNEL_LOCATIONS = 0xffff200c
 GET_MINIBOT_INFO        = 0xffff2014
 GET_NUM_KERNELS         = 0xffff2010
 GET_PUZZLE_CNT          = 0xffff2008
@@ -38,10 +40,10 @@ three:  .float 3.0
 five:   .float 5.0
 PI:     .float 3.141592
 F180:   .float 180.0
-rand_x: .word 123456789
-rand_y: .word 362436069
-rand_z: .word 521288629
-rand_w: .word 88675123
+rand_x: .word 123456
+rand_y: .word 362436
+rand_z: .word 521288
+rand_w: .word 88675
 
 ### Puzzle
 GRIDSIZE = 8
@@ -74,63 +76,72 @@ main:
         sw      $s1, 8($sp)     # is_bonking flag
         sw      $s2, 12($sp)    # is_arrived flag
 
+        li      $s0, 1
+        li      $s1, 0
+        li      $s2, 0
+
         # Always full speed ahead
         li      $t0, 10
         sw      $t0, VELOCITY
+        li      $t0, 45
+        sw      $t0, ANGLE
+        li      $t0, 1
+        sw      $t0, ANGLE_CONTROL
+        li      $a0, 60000
+        jal     rng
+        lw      $t0, TIMER
+        add     $t0, $t0, $v0
+        add     $t0, $t0, 80000
+        sw      $t0, TIMER
 
         main_loop:
 
         should_pickup:
+                # lw      $a0, BOT_X      # $a0 = x
+                # lw      $a1, BOT_Y      # $a1 = y
                 # jal     check_if_corn           # check whether there's corn at the current tile
                 # beqz    $v0, should_request     # if $v0 == true then pickup
-                lw      $a0, BOT_X      # $a0 = x
-                lw      $a1, BOT_Y      # $a1 = y
-                sw      $v0, PICKUP             # request pickup
-
-        should_skip:
-                beqz    $s2, should_turn_around
-                li      $s2, 0
-                li      $s0, 0
+                sw      $0, PICKUP             # request pickup
 
         should_turn_around:
-                beqz    $s1, should_request
-                lw      $a0, ANGLE
-                jal     rand_turn_around
-                sw      $0, ANGLE_CONTROL
-                sw      $v0, ANGLE
+                # beqz    $s1, should_request
+                beqz    $s1, should_move
                 li      $s1, 0
-                li      $t0, 200
-                mul     $t0, $t0, 1000
+                jal     rand_turn_around
+                sw      $v0, ANGLE
+                sw      $0, ANGLE_CONTROL
                 lw      $t1, TIMER
-                add     $t1, $t1, $t0
+                add     $t1, $t1, $v1
                 sw      $t1, TIMER
-                j       main_continue
-
-        should_request:
-                lbu     $t0, has_puzzle         # request if has_puzzle == false
-                bnez    $t0, should_solve
-                # lhu     $t0, num_puzzles
-                # bge     $t0, 3, should_spawn    # skip requesting puzzle if num_puzzles >= 3
-                la      $t0, puzzle
-                sw      $t0, REQUEST_PUZZLE     # request puzzle
-                j       should_spawn            # skip solving puzzle until there is a puzzle
-                
-        should_solve:
-                bnez    $s0, main_continue
-                sw      $0, VELOCITY
-                jal     solve_puzzle
                 li      $t0, 10
                 sw      $t0, VELOCITY
                 j       main_continue
 
-        should_spawn:
-                bnez    $s0, main_continue
-                jal     check_if_spawn_bot
-                beqz    $v0, should_move
-                sw      $0, SPAWN_MINIBOT       # spawn basic minibot
+        # should_request:
+        #         lw      $t0, has_puzzle         # request if has_puzzle == false
+        #         bnez    $t0, should_solve
+        #         # lw     $t0, num_puzzles
+        #         # bge     $t0, 3, should_spawn    # skip requesting puzzle if num_puzzles >= 3
+        #         la      $t0, puzzle
+        #         sw      $t0, REQUEST_PUZZLE     # request puzzle
+        #         j       should_spawn            # skip solving puzzle until there is a puzzle
+                
+        # should_solve:
+        #         bnez    $s0, main_continue
+        #         sw      $0, VELOCITY
+        #         jal     solve_puzzle
+        #         li      $t0, 10
+        #         sw      $t0, VELOCITY
+        #         j       main_continue
+
+        # should_spawn:
+        #         bnez    $s0, main_continue
+        #         jal     check_if_spawn_bot
+        #         beqz    $v0, should_move
+        #         sw      $0, SPAWN_MINIBOT       # spawn basic minibot
 
         should_move:
-                bnez    $s0, main_continue
+                beqz    $s2, main_continue
                 sw      $0, VELOCITY
                 lw      $a0, BOT_X
                 lw      $a1, BOT_Y
@@ -143,12 +154,13 @@ main:
                         jal     travel_to_point
                         j       main_travel_set_vel
                 main_travel_randomly:
-                        li      $a0, 180
+                        li      $a0, 360
                         jal     rng
-                        sw      $0, ANGLE_CONTROL
                         sw      $v0, ANGLE
+                        sw      $0, ANGLE_CONTROL
                 main_travel_set_vel:
                         li      $s0, 1
+                        li      $s2, 0
                         li      $t0, 10
                         sw      $t0, VELOCITY
         
@@ -156,17 +168,6 @@ main:
                 j       main_loop
 
         main_end:
-                lw      $a0, BOT_X
-                lw      $a1, BOT_Y
-                jal     get_best_corn
-
-                move    $v0, $a0
-                move    $v1, $a1
-                jal     travel_to_point
-
-                jal     check_if_spawn_bot
-        ### Spawn bots ###
-
                 # Stop moving
                 sw      $0, VELOCITY
                 
@@ -211,20 +212,20 @@ travel_to_point:
         move    $s0, $a0
         move    $s1, $a1
 
-        travel_to_point_loop:
-                lw      $t0, BOT_X
-                sub     $t1, $t0, 8
-                add     $t2, $t0, 8
+        # travel_to_point_loop:
+        #         lw      $t0, BOT_X
+        #         sub     $t1, $t0, 8
+        #         add     $t2, $t0, 8
 
-                blt     $s0, $t1, travel_to_point_move
-                bgt     $s0, $t2, travel_to_point_move
+        #         blt     $s0, $t1, travel_to_point_move
+        #         bgt     $s0, $t2, travel_to_point_move
 
-                lw      $t1, BOT_Y
-                sub     $t2, $t1, 8
-                add     $t3, $t1, 8
+        #         lw      $t1, BOT_Y
+        #         sub     $t2, $t1, 8
+        #         add     $t3, $t1, 8
 
-                blt     $s1, $t2, travel_to_point_move
-                blt     $s1, $t3, finish_travel_to_point
+        #         blt     $s1, $t2, travel_to_point_move
+        #         blt     $s1, $t3, finish_travel_to_point
 
         travel_to_point_move:
                 lw      $t0, BOT_X
@@ -233,17 +234,11 @@ travel_to_point:
                 sub     $a1, $s1, $t1
                 jal     sb_arctan # $v0 will have the angle we need to set the bot to
                 li      $t0, 1
-                sw      $t0, ANGLE_CONTROL($zero)
-                sw      $v0, ANGLE($zero)
-                li      $t0, 1
-                sw      $t0, VELOCITY
-
-                j       travel_to_point_loop
+                sw      $t0, ANGLE_CONTROL
+                sw      $v0, ANGLE
+                # j       travel_to_point_loop
 
         finish_travel_to_point:
-                li      $t0, 0
-                sw      $t0, VELOCITY
-
                 lw      $ra, 0($sp)
                 lw      $s0, 4($sp)
                 lw      $s1, 8($sp)
@@ -284,16 +279,14 @@ solve_puzzle:
 rand_turn_around:
         # a0 = direction
         sub     $sp, $sp, 8
-        sw      $ra, 0($sp)     
-        sw      $a0, 4($sp)     # save dir
-        li      $a0, 180
-        jal     rng             # int rand_angle = rng(180)
-        lw      $t0, 4($sp)     # int dir 
-        add     $t1, $t1, 180   # rand_angle = rand_angle + 180
-        add     $t1, $t1, $t0   # rand_angle = dir + rand_angle
-        sw      $t1, 4($sp)     # save rand_angle
-        li      $a0, 24000
+        sw      $ra, 0($sp)    
+        li      $a0, 90
+        jal     rng             # int rand_angle = rng(90)
+        add     $v0, $v0, 135   # rand_angle + 135
+        sw      $v0, 4($sp)     # save rand_angle
+        li      $a0, 70000
         jal     rng
+        add     $v0, $v0, 60000
         move    $v1, $v0
         lw      $ra, 0($sp)
         lw      $v0, 4($sp)
@@ -318,6 +311,7 @@ rng:
         sw      $t0, rand_w     # w = w ^ (w >> 19) ^ (t ^ (t >> 8))
         div     $t0, $a0        # w % upper_bound
         mfhi    $v0             # return rand() < upper_bound
+        jr      $ra
 
 get_best_corn:
         # $a0 = x, $a1 = y
@@ -358,6 +352,7 @@ get_best_corn:
                                 move    $t4, $t5        # best_corn = curr_k
                                 move    $v0, $t0        # x = min_x
                                 move    $v1, $t1        # y = min_y
+                                j       best_corn_end
                                 # }
                         # }
                 best_corn_inner_continue:
