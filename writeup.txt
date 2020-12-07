@@ -1,1 +1,5 @@
-Our main strategy involved 
+We implemented various functions that would allow our Spimbot to succesfully gather points. 
+
+The most important method id the get_best_corn. This method searches through all of the corn on the map to find the one that has the most amount of corn for its distance. Afterwards, we can then use our travel_to_point method to arrive at that corn. If there is an obstacle in the way, such as walls, we implemented a bonk interrupt to make the spimbot move in a random direction for a certain amount of time. This should allow the Spimbot to eventually move to a location where it could then travel in a straight line to the corn.
+For solving puzzles we used the basic solver provided. We request a puzzle and use the puzzle interrupt to then set a variable to be true. This variable is checked in our main loop and the puzzle can then be solved. Afterwards another one is requested.
+To further help our Spimbot, we set a rule to spawn minibots if conditions are met. Basically, if there are fewer than three spimbots on the map and we have the resources to spawn them, we will spawn the random ones to hopefully destroy silos or other enemy bots.
