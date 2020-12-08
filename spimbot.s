@@ -28,8 +28,7 @@ REQUEST_PUZZLE_ACK      = 0xffff00d8  ## Puzzle
 
 PICKUP                  = 0xffff00f4
 
-# GET_KERNEL_LOCATIONS    = 0xffff202c
-GET_KERNEL_LOCATIONS = 0xffff200c
+GET_KERNEL_LOCATIONS    = 0xffff200c
 GET_MINIBOT_INFO        = 0xffff2014
 GET_NUM_KERNELS         = 0xffff2010
 GET_PUZZLE_CNT          = 0xffff2008
@@ -40,10 +39,10 @@ three:  .float 3.0
 five:   .float 5.0
 PI:     .float 3.141592
 F180:   .float 180.0
-rand_x: .word 123456
-rand_y: .word 362436
-rand_z: .word 521288
-rand_w: .word 88675
+rand_x: .word 1454625
+rand_y: .word 9878973
+rand_z: .word 5325928
+rand_w: .word 124436
 
 ### Puzzle
 GRIDSIZE = 8
@@ -57,6 +56,7 @@ minibot_info:
 .half 0:2000
 
 ### Kernels
+kernel_locations:
 num_kernels:    .word 0
 kernels:        .byte 0:2000
 
@@ -70,11 +70,13 @@ main:
         or      $t4, $t4, 1                       # global enable
 	mtc0    $t4, $12
 
-        sub     $sp, $sp, 16
+        sub     $sp, $sp, 24
         sw      $ra, 0($sp)
-        sw      $s0, 4($sp)     # is_moving flag
+        sw      $s0, 4($sp)     # is_on_the_way flag
         sw      $s1, 8($sp)     # is_bonking flag
         sw      $s2, 12($sp)    # is_arrived flag
+        sw      $s3, 16($sp)    # target_x
+        sw      $s4, 20($sp)    # target_y
 
         li      $s0, 1
         li      $s1, 0
@@ -87,21 +89,31 @@ main:
         sw      $t0, ANGLE
         li      $t0, 1
         sw      $t0, ANGLE_CONTROL
-        li      $a0, 60000
-        jal     rng
         lw      $t0, TIMER
-        add     $t0, $t0, $v0
-        add     $t0, $t0, 80000
+        add     $t0, $t0, 150000
         sw      $t0, TIMER
 
         main_loop:
 
         should_pickup:
-                # lw      $a0, BOT_X      # $a0 = x
-                # lw      $a1, BOT_Y      # $a1 = y
+                lw      $a0, BOT_X      # $a0 = x
+                lw      $a1, BOT_Y      # $a1 = y
                 # jal     check_if_corn           # check whether there's corn at the current tile
                 # beqz    $v0, should_request     # if $v0 == true then pickup
                 sw      $0, PICKUP             # request pickup
+
+        is_arrived:
+                beqz    $s0, should_turn_around
+                sub     $t0, $s3, 4
+                add     $t1, $s3, 4
+                blt     $a0, $t0, should_turn_around
+                bgt     $a0, $t0, should_turn_around
+                sub     $t0, $s4, 4
+                add     $t1, $t4, 4
+                blt     $a1, $t0, should_turn_around
+                blt     $a1, $t1, should_turn_around
+                li      $s0, 0
+                li      $s2, 1
 
         should_turn_around:
                 # beqz    $s1, should_request
@@ -143,12 +155,16 @@ main:
         should_move:
                 beqz    $s2, main_continue
                 sw      $0, VELOCITY
+                la      $t0, kernels
+                sw      $t0, GET_KERNEL_LOCATIONS
                 lw      $a0, BOT_X
                 lw      $a1, BOT_Y
                 jal     get_best_corn
                 beq     $v0, -1, main_travel_randomly
                 beq     $v1, -1, main_travel_randomly
                 main_travel_to_point:
+                        move    $s3, $v0
+                        move    $s4, $v0
                         move    $a0, $v0
                         move    $a1, $v1
                         jal     travel_to_point
@@ -158,6 +174,12 @@ main:
                         jal     rng
                         sw      $v0, ANGLE
                         sw      $0, ANGLE_CONTROL
+                        li      $a0, 90000
+                        jal     rng
+                        lw      $t0, TIMER
+                        add     $t0, $t0, $v0
+                        add     $t0, $t0, 70000
+                        sw      $t0, TIMER
                 main_travel_set_vel:
                         li      $s0, 1
                         li      $s2, 0
@@ -175,7 +197,9 @@ main:
                 lw      $s0, 4($sp)
                 lw      $s1, 8($sp)
                 lw      $s2, 12($sp)
-                add     $sp, $sp, 16
+                lw      $s3, 16($sp)
+                lw      $s4, 20($sp)
+                add     $sp, $sp, 24
         
         infinite:
                 j       infinite
@@ -233,12 +257,26 @@ travel_to_point:
                 sub     $a0, $s0, $t0
                 sub     $a1, $s1, $t1
                 jal     sb_arctan # $v0 will have the angle we need to set the bot to
-                li      $t0, 1
-                sw      $t0, ANGLE_CONTROL
+                arctan_pos_x:
+                blt     $a0, 0, arctan_neg_x_pos_y
+                sub     $v0, $0, $v0
                 sw      $v0, ANGLE
-                # j       travel_to_point_loop
+                j       finish_travel_to_point
+                arctan_neg_x_pos_y:
+                blt     $a1, 0, arctan_neg_x_neg_y
+                add     $v0, $v0, 180
+                sub     $v0, $0, $v0
+                sw      $v0, ANGLE
+                j       finish_travel_to_point
+                arctan_neg_x_neg_y:
+                sub     $v0, $v0, 180
+                sub     $v0, $0, $v0
+                sw      $v0, ANGLE
+                j       finish_travel_to_point
 
         finish_travel_to_point:
+                li      $t0, 1
+                sw      $t0, ANGLE_CONTROL
                 lw      $ra, 0($sp)
                 lw      $s0, 4($sp)
                 lw      $s1, 8($sp)
@@ -284,9 +322,9 @@ rand_turn_around:
         jal     rng             # int rand_angle = rng(90)
         add     $v0, $v0, 135   # rand_angle + 135
         sw      $v0, 4($sp)     # save rand_angle
-        li      $a0, 70000
+        li      $a0, 90000
         jal     rng
-        add     $v0, $v0, 60000
+        add     $v0, $v0, 70000
         move    $v1, $v0
         lw      $ra, 0($sp)
         lw      $v0, 4($sp)
@@ -315,10 +353,16 @@ rng:
 
 get_best_corn:
         # $a0 = x, $a1 = y
-        sub     $t0, $a0, 5     # int min_x = x - 5
-        sub     $t1, $a1, 5     # int min_y = y - 5
-        add     $t2, $a0, 5     # int max_x = x + 5
-        add     $t3, $a1, 5     # int max_y = y + 5
+        li      $t0, 8
+        div     $a0, $t0
+        mflo    $a0
+        div     $a1, $t0   
+        mflo    $a1
+        sub     $t0, $a0, 5    # int min_x = x - 5
+        move    $a0, $t0
+        sub     $t1, $a1, 5    # int min_y = y - 5
+        add     $t2, $a0, 5    # int max_x = x + 5
+        add     $t3, $a1, 5    # int max_y = y + 5
         move    $t4, $0         # int best_corn = 0
 
         move    $v0, $0         # x = -1
@@ -331,36 +375,40 @@ get_best_corn:
                 bgez    $t1, if_edge_max_x      # if (min_y < 0)
                 move    $t1, $0                 # min_y = 0
         if_edge_max_x:
-                ble     $t2, 400, if_edge_max_y # if (max_x > 400)
-                li      $t2, 400                # min_x = 400
+                ble     $t2, 39, if_edge_max_y # if (max_x > 39)
+                li      $t2, 39                # min_x = 39
         if_edge_max_y:
-                ble     $t3, 400, best_corn_outer       # if (max_y > 400)
-                li      $t3, 400                        # max_y = 400
+                ble     $t3, 39, best_corn_outer       # if (max_y > 39)
+                li      $t3, 39                        # max_y = 39
 
         best_corn_outer:
                 bge     $t1, $t3, best_corn_end # while (min_y < max_y)
                 # {
+                move    $t0, $a0
                 best_corn_inner:
                         bge     $t0, $t2, best_corn_outer_continue # while (min_x < max_x)
                         # {
-                        mul     $t5, $t1, 400           # min_y * 400
-                        add     $t5, $t5, $t0           # min_x + min_y * 400
-                        lbu     $t5, kernels($t5)       # int curr_k = k[min_y][min_x] = k[min_x + min_y * 400]
+                        mul     $t5, $t1, 40            # min_y * 40
+                        add     $t5, $t5, $t0           # min_x + min_y * 40
+                        add     $t5, $t5, 4
+                        lbu     $t5, kernels($t5)       # int curr_k = k[min_y][min_x] = k[min_x + min_y * 40]
                         if_better_corn:
                                 ble     $t5, $t4, best_corn_inner_continue # if (curr_k > best_corn)
                                 # {
                                 move    $t4, $t5        # best_corn = curr_k
-                                move    $v0, $t0        # x = min_x
-                                move    $v1, $t1        # y = min_y
+                                mul     $v0, $t0, 8
+                                add     $v0, $t0, 4     # x = min_x
+                                mul     $v1, $t1, 8
+                                add     $v1, $v1, 4     # y = min_y
                                 j       best_corn_end
                                 # }
                         # }
                 best_corn_inner_continue:
-                        add     $t0, $t0, 1     # min_y = min_y + 1
+                        add     $t0, $t0, 1     
                         j       best_corn_inner
                 # }
         best_corn_outer_continue:
-                add     $t1, $t1, 1     # return {x, y}
+                add     $t1, $t1, 1     
                 j       best_corn_outer
 
         best_corn_end:
